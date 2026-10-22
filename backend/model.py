@@ -1,3 +1,4 @@
+import uuid
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin
 
@@ -7,12 +8,12 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String, unique = True, nullable=False)
     username = db.Column(db.String, unique = True, nullable = False)
-    reminder_time = db.Column(db.String)
     password = db.Column(db.String, nullable=False)
-    fs_uniquifer = db.Column(db.String, unique=True,nullable=False)
+    fs_uniquifier = db.Column(db.String,unique=True,nullable=False,default=lambda: uuid.uuid4().hex)
     active = db.Column(db.Boolean(), default = True)
     roles = db.relationship('Role', backref='bearer', secondary='user_roles')
     reservations = db.relationship('Reservation', back_populates='user')
+
 
 
 class Role(db.Model, RoleMixin):
@@ -40,7 +41,7 @@ class ParkingSpot(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     is_occupied = db.Column(db.Boolean(), default = False)
     lot_id = db.Column(db.Integer, db.ForeignKey('parking_lot.id'), nullable=False)
-    spots = db.relationship('Reservation', back_populates='spot', cascade='all, delete-orphan', lazy="dynamic")
+    reservations = db.relationship('Reservation', back_populates='spot', cascade='all, delete-orphan', lazy="dynamic")
 
 
 class Reservation(db.Model):
@@ -52,5 +53,5 @@ class Reservation(db.Model):
     remarks = db.Column(db.String)
     spot_id = db.Column(db.Integer, db.ForeignKey('parking_spot.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship("User", back_populates = "rservations")
+    user = db.relationship("User", back_populates = "reservations")
     spot = db.relationship("ParkingSpot", back_populates="reservations")
