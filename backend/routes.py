@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, jsonify
 from flask_security import login_user
 from flask_login import current_user
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from app import app
-from utils import roles_list
+from .utils import roles_list
+from backend.model import db
 
 
 @app.route("/")
@@ -30,6 +31,24 @@ def user_login():
 
     else:
         return jsonify({"User don't exist. Kindly register yourself!!"})
+
+
+@app.route("/api/register", methods=["POST"])
+def register():
+    credentials = request.get_json()
+    if not app.security.datastore.find_user(email = credentials["email"]):
+        app.security.datastore.create_user(email = credentials["email"],
+                                           username = credentials["username"],
+                                           password = generate_password_hash(credentials["password"]),
+                                           roles = ["user"])
+        db.session.commit()
+        return jsonify({
+            "message" : "User created successfully!!"
+        })
+    return jsonify({
+        "message" : "User already exists. You can login yourself!!"
+    })
+
 
 
 
