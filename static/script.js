@@ -3,14 +3,19 @@ import login from './login.js'
 import register from './register.js'
 import AdminNavbar from './admin_navbar.js'
 import UserNavbar from './user_navbar.js'
-
+import admin from './admin.js'
+import addlot from './addlot.js'
+import editlot from './editlot.js'
 
 const routes = [
     {path: '/', component:home},
     {path:'/login', component:login},
     {path:'/register', component:register},
     {path:'/admin_navbar', component:AdminNavbar},
-    {path:'/user_navbar', component:UserNavbar}
+    {path:'/user_navbar', component:UserNavbar},
+    {path:'/admin', component:admin},
+    {path:'/admin/add-lot', component:addlot},
+    {path:'/admin/edit-lot/:id', component:editlot}
 ]
 
 
