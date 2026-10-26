@@ -5,7 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app import app
 from .utils import roles_list
 from backend.model import *
-
+import datetime
 
 @app.route("/")
 def home():
@@ -143,7 +143,7 @@ def update_lot(lot_id):
         return {"message" : "lot is not available"}
     lot.prime_location_name = data.get("prime_location_name", lot.prime_location_name)
     lot.address = data.get("address", lot.address)
-    lot.price = data("price", lot.price)
+    lot.price = data.get("price", lot.price)
     lot.pincode = data.get("pincode", lot.pincode)
 
     if "add_spots" in data:
@@ -151,11 +151,77 @@ def update_lot(lot_id):
         for _ in range(extra):
             spot = ParkingSpot(lot_id=lot.id, is_occupied=False)
             db.session.add(spot)
-        db.session.commit()
+    db.session.commit()
         
     return {"message" : "lot updated successfully"}
 
 
+@app.route('/api/delete_lots/<int:lot_id>', methods=["DELETE"])
+@auth_required("token")
+@roles_accepted("admin")
+def delete_lot(lot_id):
+    lot = ParkingLot.query.get(lot_id)
+    if not lot:
+        return jsonify({"message": "Lot not found"})
+    db.session.delete(lot)
+    db.session.commit()
+    return jsonify({"message" : "Lot deleted successfully!!"})
+
+
+
+@app.route('/api/spot/<int:spot_id>', methods=["GET"])
+@auth_required("token")
+@roles_required("admin")
+def get_spot(spot_id):
+    spot = ParkingSpot.query.get(spot_id)
+
+    if not spot:
+        return jsonify({"message": "spot is not found"})
+
+    response = {
+        "id" : spot.id,
+        "is_occupied" : spot.is_occupied,
+        "status" : "Occupied" if spot.is_occupied else "Available"
+    }
+
+    if spot.is_occupied and spot.reservations:
+        reservation = spot.reservations.filter(Reservation.leaving_timestamp == None).order_by(Reservation.parking_timestamp.desc()).first()
+        if reservation:
+            parking_cost = reservation.parking_cost
+            if reservation.parking_timestamp and not reservation.leaving_timestamp:
+                duration = datetime.utcnow() - reservation.parking_timestamp
+                hours = duration.total_seconds()/3600
+                parking_cost = round(hours*spot.lot.price, 2)
+
+                response['reservation'] = {
+                    "vehicle_number" : reservation.vehicle_number,
+                    "customer_id" : reservation.user_id,
+                    "start_time" : reservation.parking_timestamp,
+                    "parking_cost" : parking_cost
+                }
+    return response
+
+
+@app.route('/api/delete_spots/<int:spot_id>', methods=["DELETE"])
+@auth_required("token")
+@roles_accepted("admin")
+def delete_spot(spot_id):
+    spot = ParkingSpot.query.get(spot_id)
+
+    if not spot:
+        return jsonify({"message": "Spot not found"})
+
+    if spot.is_occupied:
+        return jsonify({"message" : "spot has occupied, can't delete"})
+
+    active_reservation = spot.reservations.filter(Reservation.leaving_timestamp == None).first()
+
+    if active_reservation:
+        return jsonify({"message" : "Spot is in use"})
+
+    db.session.delete(spot)
+    db.session.commit()
+    return jsonify({"message" : "Spot deleted successfully!!"})
 
 
 

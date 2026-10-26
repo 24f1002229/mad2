@@ -53,7 +53,8 @@ export default {
             this.form.pincode = loc ? loc.pincode: "";
         },
         loadlotData(){
-            fetch(`/api/lot/${this.lotId}`,{
+            const lotId = this.$route.params.id;
+            fetch(`/api/lot/${lotId}`,{
                 method: "GET",
                 headers : {
                     "Authentication-Token" : localStorage.getItem("auth-token")
@@ -68,7 +69,8 @@ export default {
             })
         },
         updateLot(){
-            fetch(`/api/update_lot/${this.lotId}`,{
+            const lotId = this.$route.params.id;
+            fetch(`/api/update_lot/${lotId}`,{
                 method: "PUT",
                 headers : {
                     "Content-Type" : "application/json",
