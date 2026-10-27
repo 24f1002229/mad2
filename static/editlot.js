@@ -2,31 +2,27 @@ export default {
     template: `
         <div class="container-fluid">
             <h1> Edit Parking Lot </h1>
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                    <label for="prime_location_name" class="form-label">Prime Location name</label>
-                    <select class="form-select" v-model="form.prime_location_name" @change="setPincode" aria-label="Default select example">
-                        <option v-for="loc in locations" :value="loc.name"> {{loc.name}} </option>
-                    </select>
-                    <div class="mb-3">
-                        <label for="address" class="form-label">Address</label>
-                        <input type="address" class="form-control" id="address" v-model="form.address">
-                    </div>
-                    <div class="mb-3">
-                        <label for="Pincode" class="form-label">Pincode</label>
-                        <input type="pincode" class="form-control" id="Pincode" v-model="form.pincode" >
-                    </div>
-                    <div class="mb-3">
-                        <label for="price" class="form-label"> Price </label>
-                        <input type="number" class="form-control" id="price" v-model="form.price" >
-                    </div>
-                    <div class="mb-3">
-                        <label for="number_of_spots" class="form-label">Add Number of Spots</label>
-                        <input type="number" class="form-control" id="number_of_spots" v-model="form.add_spots" min="0">
-                    </div>
-                    <button @click="updateLot" class="btn btn-primary"> Update Lot </button>
-                </div>
+            <label for="prime_location_name" class="form-label">Prime Location name</label>
+            <select class="form-select" v-model="form.prime_location_name" @change="setPincode" aria-label="Default select example">
+                <option v-for="loc in locations" :value="loc.name"> {{loc.name}} </option>
+            </select>
+            <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <input type="address" class="form-control" id="address" v-model="form.address">
             </div>
+            <div class="mb-3">
+                <label for="Pincode" class="form-label">Pincode</label>
+                <input type="pincode" class="form-control" id="Pincode" v-model="form.pincode" >
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label"> Price </label>
+                <input type="number" class="form-control" id="price" v-model="form.price" >
+            </div>
+            <div class="mb-3">
+                <label for="number_of_spots" class="form-label">Add Number of Spots</label>
+                <input type="number" class="form-control" id="number_of_spots" v-model="form.add_spots" min="0">
+            </div>
+            <button @click="updateLot" class="btn btn-primary"> Update Lot </button>
         </div>
     `,
     data(){

@@ -6,6 +6,8 @@ import UserNavbar from './user_navbar.js'
 import admin from './admin.js'
 import addlot from './addlot.js'
 import editlot from './editlot.js'
+import user from './user.js'
+import bookreservation from './bookreservation.js'
 
 const routes = [
     {path: '/', component:home},
@@ -15,7 +17,9 @@ const routes = [
     {path:'/user_navbar', component:UserNavbar},
     {path:'/admin', component:admin},
     {path:'/admin/add-lot', component:addlot},
-    {path:'/admin/edit-lot/:id', component:editlot}
+    {path:'/admin/edit-lot/:id', component:editlot},
+    {path:'/user', component:user},
+    {path:'/user/book-spot/:lot_id', component:bookreservation}
 ]
 
 

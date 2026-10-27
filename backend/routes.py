@@ -245,3 +245,136 @@ def user_home():
         "roles" : roles_list(current_user.roles)
     })
 
+
+
+@app.route("/api/user/reservations", methods=["GET"])
+@auth_required("token")
+@roles_accepted("user", "admin")
+def get_user_reservations():
+    reservations = Reservation.query.filter_by(user_id = current_user.id).all()
+
+    result = []
+
+    for r in reservations:
+        spot_info = {
+            "id" : r.spot.id,
+            "lot" : {
+                "prime_locatione_name" : r.spot.lot.prime_location_name
+            }
+        }
+        result.append({
+            "id" : r.id,
+            "vehicle_number" : r.vehicle_number,
+            "parking_started" : bool(r.parking_timestamp),
+            "parking_ended" : bool(r.leaving_timestamp),
+            "start_time" : r.parking_timestamp.isoformat() if r.parking_timestamp else None,
+            "end_time" : r.leaving_timestamp.isoformat() if r.leaving_timestamp else None,
+            "spot" : spot_info,
+            "parking_cost" : r.parking_cost,
+        })
+
+    return jsonify(result)
+
+@app.route("/api/parking/lots", methods=["GET"])
+@auth_required("token")
+@roles_accepted("user", "admin")
+def get_available_spots():
+    lots = ParkingLot.query.all()
+
+    result = []
+    for lot in lots:
+        result.append({
+            "id" : lot.id,
+            "prime_location_name" : lot.prime_location_name,
+            "price" : lot.price,
+            "spots" : [{ "id" : s.id, "is_occupied" : s.is_occupied} for s in lot.spots ]
+        })
+    return jsonify(result)
+
+
+@app.route("/api/occupy_spot/<int:reservation_id>", methods=["PUT"])
+@auth_required("token")
+@roles_accepted("admin", "user")
+def occupy_spot(reservation_id):
+    reservation = Reservation.query.get(reservation_id)
+
+    if not reservation:
+        return jsonify({"message" : "reservation not available !!"})
+
+    spot = reservation.spot 
+    spot.is_occupied = True
+
+    if not reservation.parking_timestamp:
+        reservation.parking_timestamp = datetime.utcnow()
+
+    db.session.commit()
+    return jsonify({"message" : "spot is occupied"})
+
+@app.route("/api/free_spot/<int:reservation_id>", methods=["PUT"])
+@auth_required("token")
+@roles_accepted("admin", "user")
+def free_spot(reservation_id):
+    reservation = Reservation.query.get(reservation_id)
+
+    if not reservation:
+        return jsonify({"message" : "reservation not available !!"})
+
+    spot = reservation.spot 
+    lot = spot.lot
+
+    spot.is_occupied = False
+
+    reservation.leaving_timestamp = datetime.utcnow()
+
+    if reservation.parking_timestamp:
+        duration = reservation.leaving_timestamp - reservation.parking_timestamp
+        hours = duration.total_seconds()/3600
+        reservation.parking_cost = round(hours*lot.price, 2)
+
+    db.session.commit()
+    return {"message" : "Spot is free", "parking_cost" : reservation.parking_cost}
+
+
+@app.route("/api/book_spot/<int:spot_id>", methods=["POST"])
+@auth_required("token")
+@roles_accepted("admin", "user")
+def book_spot(spot_id):
+    data = request.get_json()
+    spot = ParkingSpot.query.get(spot_id)
+    if not spot:
+        return {"message" : "Spot is not available"}
+    if spot.is_occupied:
+        return {"message" : "Spot is occupied"}
+    spot.is_occupied = True
+
+    reservation = Reservation(
+        vehicle_number = data.get("vehicle_number"),
+        parking_timestamp = None,
+        leaving_timestamp = None,        
+        parking_cost = 0.0,
+        remarks = data.get("remarks"),
+        spot_id = spot.id,
+        user_id = current_user.id
+    )
+
+    try:
+        db.session.add(reservation)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return{"message": f"Database error : {str(e)} "}
+    return {"message": "Spot is booked"}
+
+
+@app.route("/api/lot_first_available_spot/<int:lot_id>", methods=["GET"])
+@auth_required("token")
+@roles_accepted("admin", "user")
+def lot_first_available_spot(lot_id):
+    lot = ParkingLot.query.get(lot_id)
+    if not lot:
+        return { "message" : "lot not found" }
+
+    spot = next((s for s in lot.spots if not s.is_occupied), None)
+    if not spot: 
+        return {"message" : "No Spot available"}
+    return {"spot_id" : spot.id}
