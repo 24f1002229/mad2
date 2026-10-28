@@ -3,23 +3,23 @@ export default {
     template: `
         <div class="container-fluid">
             <h1> Book Parking Spot </h1>
-            <div class"mb-3">
-                <label class="form-label">Vehicle Number</label>
-                <input type="string" class="form-control" v-model="vehicle_number" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Parking Start Time</label>
-                <input type="datetime-local" class="form-control" v-model="start_time" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Leaving Time </label>
-                <input type="datetime-local" class="form-control" v-model="end_time" required >
-            </div>
-            <div class="mb-3">
-                <label class="form-label"> Remarks </label>
-                <input type="string" class="form-control" v-model="remarks" >
-            </div>
-            <button @click="" class="btn btn-primary"> Book Spot </button>
+                <div class="mb-3">
+                    <label class="form-label">Vehicle Number</label>
+                    <input type="string" class="form-control" v-model="vehicle_number" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Parking Start Time</label>
+                    <input type="datetime-local" class="form-control" v-model="start_time" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Leaving Time </label>
+                    <input type="datetime-local" class="form-control" v-model="end_time" required >
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"> Remarks </label>
+                    <input type="string" class="form-control" v-model="remarks" >
+                </div>
+            <button @click="SubmitReservation" class="btn btn-primary"> Book Spot </button>
         </div>
     `,
     data(){
@@ -59,7 +59,7 @@ export default {
                     "Content-Type" : "application/json",
                     "Authentication-Token" : localStorage.getItem("auth-token")
                 },
-                body : JSON.stringify({
+                body: JSON.stringify({
                     vehicle_number: this.vehicle_number,
                     start_time: this.start_time,
                     end_time: this.end_time,
@@ -70,7 +70,7 @@ export default {
                 })
             })
             .then(res => res.json())
-            .then(() => {
+            .then(data => {
                 alert(data.message)
                 this.$router.push('/user')
             })

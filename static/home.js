@@ -6,6 +6,7 @@ export default {
             <div>
                 <router-link v-if="!loggedIn" class="btn btn-warning" to="/login"> Login </router-link>
                 <router-link v-if="!loggedIn" class="btn btn-success" to="/register"> Register </router-link>
+            </div>
         </div>
     `
 }

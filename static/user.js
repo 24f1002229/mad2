@@ -1,6 +1,18 @@
 export default {
     template : `
        <div class="container-fluid">
+            <div class="row">
+                <h3 style="color: brown; text-align:center " > Available Parking Lots </h3>
+                <div v-if="lots.length===0" class="alert alert-warning"> No Available Lot </div>
+                <div v-for="l in lots" :key="l.id" class="card" style="width: 18rem;">
+                    <div class="card-body>">
+                        <h5 class="card-title"> {{l.prime_location_name}}  </h5>
+                        <p class="card-text"> <b> Available Spots : </b> {{l.available_spots}} </p>
+                        <button class="btn btn-success" @click="$router.push('/user/book-spot/' + l.id)" :disabled="l.available_spots === 0"> Reserve Spot</button>
+                    </div>
+                </div>
+            </div>
+            <h3 style="color: brown; text-align:center "> Reservations </h3>
             <div v-for="r in reservations" :key="r.id" class="card" style="width: 18rem;">
                 <div class="card-body">
                     <h5 class="card-title"> Reservation #{{r.id}} 
@@ -14,32 +26,26 @@ export default {
                     <p class="card-text"> <b> Vehicle number : </b> {{r.vehicle_number}} </p>
                     <p class="card-text"> <b> Start Time : </b> {{r.start_time}} </p>
                     <p class="card-text"> <b> End Time : </b> {{r.end_time}} </p>
-                    <p class="card-text" v-if="r.parking_cost != null " > <b> Parking Cost : </b> {{r.parking_cost.tofixed(2)}} </p>
+                    <p class="card-text" v-if="r.parking_cost != null " > <b> Parking Cost : </b> {{r.parking_cost.toFixed(2)}} </p>
                     <button v-if="!r.parking_started" class="btn btn-warning" @click="parkVehicle(r.id)"> Park Vehicle </button>
                     <button v-else-if="r.parking_started && !r.parking_ended" class="btn btn-danger" @click="releaseVehicle(r.id)"> Release Vehicle </button>
                 </div>
             </div>
 
-            <div class="col">
-                <h3> Available Parking Lots </h3>
-                <div v-if="lots.length===0" class="alert alert-warning"> No Available Lot </div>
-                <div v-for="l in lots" :key="l.id" class="card">
-                    <div class="card-body>">
-                        <h5 class="card-title"> {{l.prime_location_name}}  </h5>
-                        <p class="card-text"> <b> Available Spots : </b> {{l.available_spots}} </p>
-                        <button class="btn btn-success" @click="$router.push('/user/book-spot/' + l.id)" :disabled="l.available_spots === 0"> Reserve Spot</button>
-                    </div>
-                </div>
-            </div>
 
         </div>
     `,
     data(){
         return {
             userData : {},
-            reservations : {},
+            reservations : [],
             lots : []
         }
+    },
+    mounted(){
+        this.loadUser();
+        this.loadReservations();
+        this.loadLots();
     },
     methods : {
         loadUser(){
@@ -71,7 +77,7 @@ export default {
                     parking_started : r.parking_started,
                     parking_ended : r.parking_ended,
                     start_time : r.start_time ? new Date (r.start_time + "Z").toLocaleString() : "N/A",
-                    end_time : r.end_time ? new Date (r.start_time + "Z").toLocaleString() : "N/A",
+                    end_time : r.end_time ? new Date (r.end_time + "Z").toLocaleString() : "N/A",
                     parking_cost : r.parking_cost || null,
                     active : !r.parking_ended
                 }) )

@@ -25,7 +25,7 @@ with app.app_context():
         app.security.datastore.create_user(email="user@gmail.com", username="user", password = generate_password_hash("1234"), roles=["user"])
     db.session.commit()
 
-from backend.routes import *
+
 
 
 if __name__=="__main__":

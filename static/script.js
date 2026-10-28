@@ -8,6 +8,7 @@ import addlot from './addlot.js'
 import editlot from './editlot.js'
 import user from './user.js'
 import bookreservation from './bookreservation.js'
+import search from './search.js'
 
 const routes = [
     {path: '/', component:home},
@@ -19,7 +20,9 @@ const routes = [
     {path:'/admin/add-lot', component:addlot},
     {path:'/admin/edit-lot/:id', component:editlot},
     {path:'/user', component:user},
-    {path:'/user/book-spot/:lot_id', component:bookreservation}
+    {path:'/user/book-spot/:lot_id', component:bookreservation, props:true},
+    {path:'/admin/search/user/:id', component:search},
+    {path:'/admin/search/lot/:location', component:search}
 ]
 
 

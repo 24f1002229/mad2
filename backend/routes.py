@@ -5,7 +5,30 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app import app
 from .utils import roles_list
 from backend.model import *
-import datetime
+from datetime import datetime, timezone
+from celery.result import AsyncResult
+from .tasks import export_csv_task, daily_reminder, send_monthly_report
+
+@app.route("/api/export_csv", methods=["POST"])
+@auth_required("token")
+def export_csv():
+    task = export_csv_task.delay(current_user.id)
+    return jsonify({"task_id" : task.id})
+
+@app.route("/api/task-status/<task_id>")
+def task_status(task_id):
+    res = AsyncResult(task_id)
+    return jsonify({"state" : res.state, "result" : res.result})
+
+@app.route("/trigger/daily_reminder")
+def trigger_daily():
+    daily_reminder.delay()
+    return {"status" : "daily reminder triggered"}
+
+@app.route("/trigger/send_monthly_report")
+def send_monthly_report():
+    send_monthly_report.delay()
+    return {"status" : "Monthly report send"}
 
 @app.route("/")
 def home():
@@ -305,7 +328,7 @@ def occupy_spot(reservation_id):
     spot.is_occupied = True
 
     if not reservation.parking_timestamp:
-        reservation.parking_timestamp = datetime.utcnow()
+        reservation.parking_timestamp = datetime.now(timezone.utc)
 
     db.session.commit()
     return jsonify({"message" : "spot is occupied"})
@@ -339,12 +362,17 @@ def free_spot(reservation_id):
 @auth_required("token")
 @roles_accepted("admin", "user")
 def book_spot(spot_id):
+
     data = request.get_json()
+
     spot = ParkingSpot.query.get(spot_id)
+
     if not spot:
         return {"message" : "Spot is not available"}
+    
     if spot.is_occupied:
         return {"message" : "Spot is occupied"}
+    
     spot.is_occupied = True
 
     reservation = Reservation(
@@ -378,3 +406,37 @@ def lot_first_available_spot(lot_id):
     if not spot: 
         return {"message" : "No Spot available"}
     return {"spot_id" : spot.id}
+
+
+@app.route("/api/search/user/<int:user_id>")
+@auth_required("token")
+@roles_accepted("admin")
+def search_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return {"message" : "User is not found"}
+    return {
+        "id" : user.id,
+        "email" : user.email,
+        "username" : user.username,
+        "active" : user.active
+    }
+
+@app.route("/api/search/lot")
+@auth_required("token")
+@roles_required("admin")
+def search_lot():
+    location = request.args.get("location", "")
+    lots = ParkingLot.query.filter(ParkingLot.prime_location_name.ilike(f"%{location}%")).all()
+
+    return {
+        "results" : [
+            {
+                "id" : lot.id,
+                "prime_location_name" : lot.prime_location_name,
+                "address" : lot.address,
+                "pincode" : lot.pincode,
+                "price" : lot.price
+            } for lot in lots
+        ]
+    }
