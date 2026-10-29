@@ -1,6 +1,11 @@
 export default {
     template : `
        <div class="container-fluid">
+
+            <div>
+                <button class="btn btn-warning" @click="exportCSV"> Export CSV task </button>
+            </div>
+
             <div class="row">
                 <h3 style="color: brown; text-align:center " > Available Parking Lots </h3>
                 <div v-if="lots.length===0" class="alert alert-warning"> No Available Lot </div>
@@ -132,6 +137,27 @@ export default {
                 } 
                 this.loadReservations();
                 this.loadLots()
+            })
+        },
+        exportCSV(){
+            fetch("/api/export_csv", {
+                method: "POST",
+                headers : {
+                    "Content-Type" : "application/json",
+                    "Authentication-Token" : localStorage.getItem("auth-token")
+                }
+            })
+            .then(res => {
+                if(!res.ok) throw new Error("Request Failed")
+                return res.json()
+            })
+            .then(data => {
+                alert("Export started");
+                console.log("task_id", data.task.id);
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Failed to export csv")
             })
         }
     }

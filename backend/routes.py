@@ -7,7 +7,7 @@ from .utils import roles_list
 from backend.model import *
 from datetime import datetime, timezone
 from celery.result import AsyncResult
-from .tasks import export_csv_task, daily_reminder, send_monthly_report
+from .tasks import export_csv_task, daily_reminder, send_monthly_report as monthly_report_task
 
 @app.route("/api/export_csv", methods=["POST"])
 @auth_required("token")
@@ -23,11 +23,11 @@ def task_status(task_id):
 @app.route("/trigger/daily_reminder")
 def trigger_daily():
     daily_reminder.delay()
-    return {"status" : "daily reminder triggered"}
+    return {"status" : "daily reminder send"}
 
 @app.route("/trigger/send_monthly_report")
 def send_monthly_report():
-    send_monthly_report.delay()
+    monthly_report_task.delay()
     return {"status" : "Monthly report send"}
 
 @app.route("/")
